@@ -1,0 +1,29 @@
+[client]
+toolbarMode = "minimal"
+showErrorDetails = "none"
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#2563EB"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F6F8FB"
+textColor = "#111827"
+linkColor = "#2563EB"
+codeBackgroundColor = "#EEF2F7"
+borderColor = "#D8DEE9"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "8px"
+buttonRadius = "8px"
+font = "sans-serif"
+headingFont = "sans-serif"
+codeFont = "monospace"
+baseFontSize = 15
+
+[theme.sidebar]
+backgroundColor = "#F7F9FC"
+secondaryBackgroundColor = "#EEF2F7"
+borderColor = "#D8DEE9"

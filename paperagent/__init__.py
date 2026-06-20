@@ -1,0 +1,1 @@
+"""PaperAgent application package."""

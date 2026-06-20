@@ -1,0 +1,35 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Private corpus and generated text
+data/papers/*
+data/mineru/*
+data/processed/*
+!data/papers/.gitkeep
+!data/mineru/.gitkeep
+!data/processed/.gitkeep
+
+# Generated vector store
+vectorstore/*
+!vectorstore/.gitkeep
+
+# Local model weights
+models/*
+!models/.gitkeep
