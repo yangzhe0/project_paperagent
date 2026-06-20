@@ -28,21 +28,7 @@ The live deployment currently indexes 61 team papers and supports fast/deep mode
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[PDF papers] --> B[MinerU parsing]
-    B --> C[Cleaning and chunking]
-    C --> D[BGE-M3]
-    D --> E[(FAISS)]
-    E --> F{Query router}
-    F -->|Deterministic query| G[Author / keyword / comparison indexes]
-    F -->|Open question| H[RAG retrieval]
-    G --> I[Structured answer]
-    H --> J[Ollama fast / deep]
-    J --> K[Streaming answer]
-    I --> L[Sources and timing]
-    K --> L
-```
+![PaperAgent architecture](assets/architecture.svg)
 
 ## Quick Start
 

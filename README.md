@@ -28,21 +28,7 @@ PaperAgent 将论文解析、向量检索和本地大模型整合为一套可追
 
 ## 架构
 
-```mermaid
-flowchart LR
-    A[PDF 论文] --> B[MinerU 解析]
-    B --> C[清洗与切片]
-    C --> D[BGE-M3]
-    D --> E[(FAISS)]
-    E --> F{查询路由}
-    F -->|确定性查询| G[作者 / 关键词 / 对比索引]
-    F -->|开放问题| H[RAG 检索]
-    G --> I[结构化回答]
-    H --> J[Ollama fast / deep]
-    J --> K[流式回答]
-    I --> L[来源与耗时]
-    K --> L
-```
+![PaperAgent 系统架构](assets/architecture.svg)
 
 ## 快速开始
 
