@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 @dataclass
@@ -14,6 +15,8 @@ class AnswerResult:
     route: str
     model_name: str
     timing: QueryTiming = field(default_factory=QueryTiming)
+    reasoning: Optional[str] = None
+    sources: list[dict] = field(default_factory=list)
 
     def diagnostics(self) -> str:
         return (

@@ -1,10 +1,10 @@
 import unittest
 
-from paperagent.rag_chain import RAGChain
+from paperagent.generation.rag import RAGChain, build_retrieval_query
 
 
 class RAGPromptTest(unittest.TestCase):
-    def test_prompt_contains_output_and_no_thinking_rules(self):
+    def test_prompt_contains_output_and_hidden_reasoning_rules(self):
         chain = RAGChain(retriever=object())
 
         prompt = chain.build_prompt(
@@ -15,10 +15,24 @@ class RAGPromptTest(unittest.TestCase):
 
         self.assertIn("只根据“论文片段”回答", prompt)
         self.assertIn("不输出思考过程", prompt)
-        self.assertIn("/no_think", prompt)
+        self.assertNotIn("/no_think", prompt)
+        self.assertIn("topocentric", prompt)
+        self.assertIn("禁止猜测修复", prompt)
         self.assertIn("观测数据、处理方法、主要结果、可复核来源", prompt)
         self.assertIn("来源：", prompt)
         self.assertIn("PDF 文件名、页码和一句依据", prompt)
+
+    def test_short_follow_up_uses_previous_user_question_for_retrieval(self):
+        query = build_retrieval_query(
+            "它具体用了什么方法？",
+            [
+                {"role": "user", "content": "总结 Triton 2021 年这篇论文。"},
+                {"role": "assistant", "content": "这篇论文重新处理了观测数据。"},
+            ],
+        )
+
+        self.assertIn("Triton 2021", query)
+        self.assertIn("它具体用了什么方法", query)
 
 
 if __name__ == "__main__":

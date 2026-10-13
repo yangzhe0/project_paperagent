@@ -34,10 +34,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if command -v mineru >/dev/null 2>&1; then
-  MINERU_CMD=(mineru)
+if [[ -n "${PAPERAGENT_MINERU_BIN:-}" ]]; then
+  MINERU_CMD=("$PAPERAGENT_MINERU_BIN")
 else
-  MINERU_CMD=(conda run -n mineru mineru)
+  MINERU_CMD=(/opt/miniconda3/bin/conda run -n mineru mineru)
 fi
 
 export NO_PROXY="${NO_PROXY:-127.0.0.1,localhost}"

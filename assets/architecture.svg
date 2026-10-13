@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="610" viewBox="0 0 1400 610" role="img" aria-labelledby="title desc">
   <title id="title">PaperAgent architecture</title>
-  <desc id="desc">Academic papers are parsed, chunked, embedded, and indexed in FAISS. A query router selects deterministic retrieval or RAG with Ollama, then returns an answer with sources and timing.</desc>
+  <desc id="desc">Academic papers are parsed into semantic chunks and indexed for dense and lexical retrieval. A query router selects deterministic retrieval or grounded generation with Ollama.</desc>
 
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -39,15 +39,15 @@
 
   <rect class="box" x="470" y="166" width="160" height="94" fill="#f8fafc" stroke="#94a3b8"/>
   <text x="550" y="207" class="label">Chunking</text>
-  <text x="550" y="232" class="detail">Clean and split text</text>
+  <text x="550" y="232" class="detail">Semantic sections · noise removal</text>
 
   <rect class="box" x="670" y="166" width="160" height="94" fill="#f5f3ff" stroke="#a78bfa"/>
   <text x="750" y="207" class="label">BGE-M3</text>
   <text x="750" y="232" class="detail">Local embeddings</text>
 
   <rect class="box" x="870" y="166" width="160" height="94" fill="#fff7ed" stroke="#fb923c"/>
-  <text x="950" y="207" class="label">FAISS</text>
-  <text x="950" y="232" class="detail">Vector index</text>
+  <text x="950" y="207" class="label">Hybrid Index</text>
+  <text x="950" y="232" class="detail">FAISS · BM25 · rank fusion</text>
 
   <rect class="box" x="1070" y="166" width="210" height="94" fill="#eff6ff" stroke="#2563eb"/>
   <text x="1175" y="207" class="label">Query Router</text>
@@ -65,7 +65,7 @@
 
   <rect class="box" x="765" y="350" width="320" height="108" fill="#fff7ed" stroke="#fb923c"/>
   <text x="925" y="391" class="label">RAG + Ollama</text>
-  <text x="925" y="417" class="detail">Context retrieval · fast / deep model</text>
+  <text x="925" y="417" class="detail">Hybrid retrieval · conversation context</text>
   <text x="925" y="439" class="detail">Streaming generation</text>
 
   <path class="line" d="M605 404 H675 V509 H725"/>

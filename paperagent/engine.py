@@ -29,6 +29,7 @@ from paperagent.paper_index import (
 )
 from paperagent.performance import AnswerResult, QueryTiming
 from paperagent.rag_chain import RAGChain
+from paperagent.llm_client import create_llm_client
 from paperagent.ollama_client import OllamaClient
 
 
@@ -86,7 +87,8 @@ class PaperAgentEngine:
         self.model_name = model_name
         if self.rag_chain is not None:
             self.rag_chain.model_name = model_name
-            self.rag_chain.ollama_client = OllamaClient(model_name)
+            self.rag_chain.llm_client = create_llm_client(model_name)
+            self.rag_chain.ollama_client = self.rag_chain.llm_client
 
     def answer(self, question: str) -> str:
         """

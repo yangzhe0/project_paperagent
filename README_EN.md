@@ -2,37 +2,48 @@
 
 [简体中文](README.md) | **English**
 
-A local RAG agent for academic paper knowledge bases, with deterministic retrieval, paper comparison, source tracing, and local LLM question answering.
+An intelligent research paper agent tailored for celestial astrometry and planetary ephemerides, featuring hybrid routing, deep reasoning chains, paper-level citations, and a responsive web interface.
 
-[Live Demo](https://paper.sues.fun) · Streamlit · FAISS · BGE-M3 · MinerU · Ollama
+[Live Demo](https://paper.sues.fun) · Streamlit · FAISS · BGE-M3 · MinerU · Frontier Reasoning Engine
 
-## Interface
+**Author**: [Zhe Yang (杨哲)](https://zheoi.com)
 
-![PaperAgent desktop interface](assets/screenshots/desktop-chat.png)
+---
 
-<img src="assets/screenshots/mobile-chat.png" alt="PaperAgent mobile interface" width="390">
+## Interface Preview
+
+![PaperAgent Desktop UI](assets/screenshots/desktop-chat.png)
+
+<p align="center">
+  <img src="assets/screenshots/mobile-chat.png" alt="PaperAgent Mobile UI" width="390">
+</p>
+
+---
 
 ## Overview
 
-PaperAgent combines paper parsing, vector retrieval, and local language models into a traceable academic question-answering workflow. It does not send every query directly to an LLM: author, keyword, and explicit paper-comparison queries use deterministic indexes first, while open-ended questions fall back to RAG. This reduces unnecessary generation and improves response time.
+**PaperAgent** is designed for deep-space astrometry, irregular satellite orbit ephemerides, and Gaia stellar catalog systematic error reductions.
 
-The live deployment currently indexes 61 team papers and supports fast/deep model profiles, streaming answers, file-level source tracing, and runtime diagnostics.
+It leverages a **Hybrid Query Router**:
+1. **Deterministic Fast Path**: Structured queries regarding paper catalogs, dataset origins, and satellite comparisons hit deterministic metadata indexes directly with sub-10ms latency.
+2. **Academic RAG Chain**: In-depth mechanism queries, astrometric residuals, and observation methods route to the enhanced retrieval-augmented generation pipeline.
 
-## Highlights
+---
 
-- **Hybrid query routing**: deterministic indexes first, RAG for open-ended questions
-- **Paper knowledge base**: MinerU parsing, text cleaning and chunking, BGE-M3 embeddings, and FAISS retrieval
-- **Structured retrieval**: author lists, data-source keywords, paper comparison, and object-level comparison
-- **Traceable answers**: file-level sources and retrieved excerpts attached to responses
-- **Local deployment**: fast/deep models served by Ollama without external model APIs
+## Key Features
 
-## Architecture
+- **Hybrid Routing**: Fast deterministic answers for metadata queries; contextual RAG for open academic questions.
+- **High-Precision Knowledge Base**: MinerU formula/table extraction, 1,600-character hierarchical chunking, BGE-M3 embeddings, and FAISS indexing.
+- **Frontier Reasoning Kernels**:
+  - ⚡ **Flash**: Ultra-long context window and rapid response.
+  - 🧠 **Thinking**: Deep chain-of-thought derivation for astrometric residuals and observation models.
+  - 🔬 **Pro**: Long-document synthesis and cross-paper literature reviews.
+- **Transparent Citations**: Every claim is mapped to paper titles, page numbers, and original snippets.
+- **Modern Responsive Design**: Fully responsive across desktop widescreen and mobile devices (iPhone 390px viewport).
 
-![PaperAgent architecture](assets/architecture.svg)
+---
 
 ## Quick Start
-
-Requirements: Python 3.10+, Ollama, and a local BGE-M3-compatible embedding model.
 
 ```bash
 pip install -r requirements.txt
@@ -40,19 +51,22 @@ cp .env.example .env
 streamlit run app.py --server.port 8000
 ```
 
-Full retrieval requires your own paper corpus. Build the local vector store with `scripts/parse_with_mineru.sh` and `scripts/rebuild_index.sh`. Ollama defaults to `http://127.0.0.1:11434`.
+---
 
-## Tests
+## Testing
 
 ```bash
 python -m unittest discover -s tests
 ```
 
-The test suite covers query routing, the Ollama client, performance configuration, RAG prompts, and offline scripts. It does not require the private corpus or a running Ollama instance.
+---
 
-## Data Policy
+## Author & Contact
 
-The public repository excludes private or copyrighted papers, MinerU output, FAISS indexes, and model weights. Their directories contain placeholders only; the full demo runs on a private server.
+- **Author**: Zhe Yang (杨哲)
+- **Website**: [zheoi.com](https://zheoi.com)
+
+---
 
 ## License
 

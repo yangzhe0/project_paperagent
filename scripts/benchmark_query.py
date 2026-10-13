@@ -11,7 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from paperagent.config import DEFAULT_MODEL, MODEL_PROFILES, get_model_name
-from paperagent.engine import PaperAgentEngine
+from paperagent.core.engine import PaperAgentEngine
 
 
 DEFAULT_QUESTIONS = [

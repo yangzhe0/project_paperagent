@@ -1,8 +1,8 @@
 import unittest
 
-from paperagent.engine import PaperAgentEngine
-from paperagent.paper_index import PaperIndex
-from paperagent.rag_chain import RAGChain
+from paperagent.core.engine import PaperAgentEngine
+from paperagent.retrieval.catalog import PaperIndex
+from paperagent.generation.rag import RAGChain
 
 
 class FakeRAGChain:

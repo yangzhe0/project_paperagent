@@ -1,17 +1,7 @@
 """
 RAG (Retrieval-Augmented Generation) 问答链模块
 
-流程：
-1. 使用向量检索器从知识库中召回相关论文片段
-2. 格式化这些片段成提示词上下文
-3. 构建对应的系统提示（区分对比和普通问答）
-4. 调用本地 Ollama + Qwen 大模型进行回答
-5. 在回答后自动附加来源信息（文件名、页码、原文）
-
-设计原则：
-- 所有回答必须基于论文片段，不编造
-- 答案附带完整的来源追踪
-- 对比和普通问答使用不同的 prompt 模板
+支持云端学术推理内核（Gemini 3.8 Flash, Claude Thinking 等）与本地推理引擎。
 """
 
 import time
@@ -19,49 +9,35 @@ import unicodedata
 
 from langchain.prompts import PromptTemplate
 
-from paperagent.ollama_client import OllamaClient
+from paperagent.config import (
+    RAG_MAX_CONTEXT_CHARS,
+    RAG_TOP_K_DOCS,
+    get_backend_for_model,
+)
+from paperagent.llm_client import create_llm_client
 from paperagent.performance import AnswerResult, QueryTiming
 
 
 class RAGChain:
     """
     RAG 问答链 - 负责向量检索、提示词构建和大模型调用
-
-    关键特性：
-    - 自动来源追踪（每个回答片段都标注来源）
-    - 区分对比和普通问答的不同 prompt 模板
-    - 本地化部署（使用 Ollama API 而非 OpenAI）
     """
-    def __init__(self, retriever, model_name: str = "qwen2.5:7b-instruct", ollama_client=None):
-        """
-        初始化 RAG 链
 
-        Args:
-            retriever: LangChain 向量检索器（FAISS 封装）
-            model_name (str): Ollama 中的模型名称（如 qwen2.5:7b-instruct）
-        """
+    def __init__(
+        self,
+        retriever,
+        model_name: str = "gemini-3.8-flash-high",
+        ollama_client=None,
+        llm_client=None,
+    ):
         self.retriever = retriever
         self.model_name = model_name
-        self.ollama_client = ollama_client or OllamaClient(model_name)
+        self.llm_client = llm_client or ollama_client or create_llm_client(model_name)
+        # 兼容旧代码与单元测试
+        self.ollama_client = self.llm_client
         self.last_result = None
 
     def answer(self, question: str) -> str:
-        """
-        完整的 RAG 问答流程
-
-        流程：
-        1. 向量检索 - 从知识库中找到相关的论文片段
-        2. 格式化上下文 - 组织片段为结构化的输入
-        3. 构建提示词 - 根据问题类型选择对应的 system prompt
-        4. 调用大模型 - 通过 Ollama API 获取回答
-        5. 格式化输出 - 确保回答包含来源信息和统一格式
-
-        Args:
-            question (str): 用户问题
-
-        Returns:
-            str: 格式化的完整回答（包含"回答："前缀和来源部分）
-        """
         return self.answer_with_trace(question).text
 
     def answer_with_trace(self, question: str) -> AnswerResult:
@@ -70,19 +46,29 @@ class RAGChain:
         documents = self.retriever.invoke(question)
         retrieval_ms = (time.perf_counter() - retrieval_started) * 1000
 
-        context = self.format_context(documents)
+        max_chars = (
+            RAG_MAX_CONTEXT_CHARS
+            if get_backend_for_model(self.model_name) == "proxy"
+            else 800
+        )
+        context = self.format_context(documents, max_chars=max_chars)
         include_sources = wants_source_details(question)
         prompt = self.build_prompt(question, context, include_sources=include_sources)
 
         llm_started = time.perf_counter()
-        response = self.call_ollama(prompt)
+        response = self.llm_client.generate(prompt)
         llm_ms = (time.perf_counter() - llm_started) * 1000
 
         text = self.finalize_response(response, documents, include_sources)
+        reasoning = getattr(self.llm_client, "last_reasoning", None)
+        structured_sources = self.extract_sources(documents)
+
         result = AnswerResult(
             text=text,
             route="rag",
             model_name=self.model_name,
+            reasoning=reasoning,
+            sources=structured_sources,
             timing=QueryTiming(
                 retrieval_ms=retrieval_ms,
                 llm_ms=llm_ms,
@@ -97,13 +83,19 @@ class RAGChain:
         retrieval_started = time.perf_counter()
         documents = self.retriever.invoke(question)
         retrieval_ms = (time.perf_counter() - retrieval_started) * 1000
-        context = self.format_context(documents)
+
+        max_chars = (
+            RAG_MAX_CONTEXT_CHARS
+            if get_backend_for_model(self.model_name) == "proxy"
+            else 800
+        )
+        context = self.format_context(documents, max_chars=max_chars)
         include_sources = wants_source_details(question)
         prompt = self.build_prompt(question, context, include_sources=include_sources)
 
         chunks = []
         llm_started = time.perf_counter()
-        for chunk in self.ollama_client.generate_stream(prompt):
+        for chunk in self.llm_client.generate_stream(prompt):
             chunks.append(chunk)
             yield chunk
         llm_ms = (time.perf_counter() - llm_started) * 1000
@@ -117,10 +109,16 @@ class RAGChain:
         text = response + suffix
         if not text.lstrip().startswith("总结："):
             text = f"总结：基于当前检索到的论文片段生成回答。\n\n{text}"
+
+        reasoning = getattr(self.llm_client, "last_reasoning", None)
+        structured_sources = self.extract_sources(documents)
+
         self.last_result = AnswerResult(
             text=text,
             route="rag",
             model_name=self.model_name,
+            reasoning=reasoning,
+            sources=structured_sources,
             timing=QueryTiming(
                 retrieval_ms=retrieval_ms,
                 llm_ms=llm_ms,
@@ -189,44 +187,33 @@ class RAGChain:
         )
 
     @staticmethod
-    def format_context(documents: list) -> str:
-        """
-        将检索到的论文片段格式化为结构化的上下文
-
-        格式示例：
-        [1] 文件：2021_AJ_某论文.pdf
-        页码：P12
-        原文片段：...
-
-        Args:
-            documents: LangChain Document 列表
-
-        Returns:
-            str: 格式化的上下文字符串
-        """
+    def format_context(documents: list, max_chars: int = 2500) -> str:
         blocks = []
         for index, doc in enumerate(documents, start=1):
             filename = doc.metadata.get("filename") or doc.metadata.get("source", "unknown")
             page = doc.metadata.get("page") or "?"
-            content = clean_text(doc.page_content)[:800]
+            content = clean_text(doc.page_content)[:max_chars]
             blocks.append(
                 f"[{index}] 文件：{filename}\n页码：P{page}\n原文片段：{content}"
             )
         return "\n\n".join(blocks)
 
     @staticmethod
+    def extract_sources(documents: list) -> list[dict]:
+        sources = []
+        for doc in documents:
+            filename = doc.metadata.get("filename") or doc.metadata.get("source", "unknown")
+            page = doc.metadata.get("page") or "?"
+            snippet = " ".join(clean_text(doc.page_content).split())[:400]
+            sources.append({
+                "filename": filename,
+                "page": page,
+                "snippet": snippet,
+            })
+        return sources
+
+    @staticmethod
     def format_sources(documents: list) -> str:
-        """
-        将检索结果格式化为带来源的引用信息
-
-        在回答后自动附加，便于追踪论文来源
-
-        Args:
-            documents: LangChain Document 列表
-
-        Returns:
-            str: 格式化的来源信息（每条包含文件名、页码、片段）
-        """
         lines = ["来源："]
         for index, doc in enumerate(documents, start=1):
             filename = doc.metadata.get("filename") or doc.metadata.get("source", "unknown")
@@ -238,16 +225,6 @@ class RAGChain:
                 f"   原文片段：{snippet}"
             )
         return "\n".join(lines)
-
-    def call_ollama(self, prompt):
-        return self.ollama_client.generate(prompt)
-
-    def finalize_response(self, response, documents, include_sources):
-        if include_sources and "来源：" not in response and "相关文件：" not in response:
-            response = f"{response.rstrip()}\n\n{self.format_sources(documents)}"
-        if not response.lstrip().startswith("总结："):
-            response = f"总结：基于当前检索到的论文片段生成回答。\n\n{response}"
-        return response
 
     @staticmethod
     def is_compare_question(question):
@@ -264,8 +241,6 @@ class RAGChain:
 
 
 def clean_text(text):
-    """清掉 PDF 解析中常见的不可见控制字符，避免污染 prompt 和来源片段。"""
-
     normalized = unicodedata.normalize("NFKC", text)
     return "".join(
         char
@@ -276,8 +251,6 @@ def clean_text(text):
 
 
 def wants_source_details(question):
-    """只有用户明确要论文/文件/来源时，才在界面上展开相关文件列表。"""
-
     keywords = [
         "来源",
         "文件",
